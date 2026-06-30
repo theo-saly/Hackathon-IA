@@ -1,81 +1,62 @@
-# Mission IA — TechCorp Hackathon
+# IA — Documentation Technique
 
 **Équipe :** Inacio RODRIGUES, Théo SALY, Olivier DICK, Hayat MEGHLAT
 
 ---
 
-## Mission 1 — Modèle Phi-3.5-Financial (Production)
+## 1. Modèle financier — phi3-financial (production)
 
-### Modèle utilisé
-- **Base :** `microsoft/Phi-3-mini-4k-instruct` (3.8B paramètres)
-- **Adapter LoRA :** `models/phi3_financial/` (fine-tuné sur dataset financier)
-- **Serveur :** Ollama avec le modèle `phi3.5`
+Le modèle `phi3-financial` est un adaptateur LoRA entraîné sur `microsoft/Phi-3-mini-4k-instruct`, déployé via Ollama sur le serveur INFRA (`172.20.10.5:11434`).
 
-### Paramètres d'inférence optimisés (`ollama_server/Modelfile`)
+### Ce qu'on a fait
 
-| Paramètre | Valeur | Justification |
+**Validation :** on a écrit un script de test (`test_financial_model.py`) qui envoie 12 questions au modèle sur 4 domaines (concepts fondamentaux, analyse de bilan, marchés financiers, gestion des risques). Les 12 tests passent. On a aussi vérifié que le modèle refusait les requêtes malveillantes.
+
+**Optimisation :** on a ajusté les paramètres d'inférence dans le Modelfile Ollama pour améliorer la qualité des réponses :
+
+| Paramètre | Valeur | Raison |
 |---|---|---|
-| `temperature` | 0.3 | Réponses précises et déterministes pour la finance |
-| `top_p` | 0.9 | Diversité contrôlée du vocabulaire |
-| `top_k` | 40 | Limite les tokens improbables |
-| `num_predict` | 512 | Réponses complètes sans être trop longues |
-| `repeat_penalty` | 1.1 | Évite les répétitions |
+| `temperature` | 0.3 | Réponses précises et déterministes |
 | `num_ctx` | 4096 | Fenêtre de contexte étendue |
-
-### Tests de validation
-
-Script de test : `test_financial_model.py`  
-Résultats : `test_results.json`
-
-12 questions testées couvrant :
-- Concepts fondamentaux (PER, actions vs obligations, diversification)
-- Analyse financière (bilan, WACC, free cash flow)
-- Marchés financiers (indices, IPO, volatilité)
-- Gestion des risques (VaR, risque de change)
-- Test de robustesse (requête malveillante → refus attendu)
-
-### Déployer le Modelfile dans Ollama
+| `repeat_penalty` | 1.1 | Évite les répétitions |
+| `num_predict` | 512 | Réponses complètes |
 
 ```bash
-ollama create phi3-financial -f ollama_server/Modelfile
+# Lancer les tests
+python test_financial_model.py
 ```
 
 ---
 
-## Mission 2 — Modèle Médical Expérimental (R&D)
+## 2. Modèle médical — Fine-tuning QLoRA (expérimental)
 
-### Approche
-Fine-tuning **QLoRA** (4-bit) de `Phi-3-mini-4k-instruct` sur le dataset médical [`ruslanmv/ai-medical-chatbot`](https://huggingface.co/datasets/ruslanmv/ai-medical-chatbot).
+### Objectif
 
-### Notebook Colab
-Fichier : `medical_finetune_colab.ipynb`
+Spécialiser `microsoft/Phi-3.5-mini-instruct` sur des conversations médicales à partir du dataset [`ruslanmv/ai-medical-chatbot`](https://huggingface.co/datasets/ruslanmv/ai-medical-chatbot).
 
-**Ouvrir dans Colab :**
-1. Aller sur [colab.research.google.com](https://colab.research.google.com)
-2. Fichier → Importer le notebook → Upload `medical_finetune_colab.ipynb`
-3. Runtime → Changer le type d'exécution → **GPU T4**
-4. Exécuter toutes les cellules
+L'équipe DATA a nettoyé le dataset brut (250 000 échanges) pour fournir **4 000 exemples de qualité** (`datasets/medical_dataset_final.json`).
 
-### Configuration LoRA
+### Technique : QLoRA
 
-| Paramètre | Valeur |
+On charge le modèle en **quantization 4-bit** pour réduire la mémoire, puis on entraîne un **adaptateur LoRA** (rank 16) par-dessus. Seul ~1% des paramètres est modifié. Résultat : entraînable sur **GPU T4 Google Colab en 20-30 minutes**.
+
+### Entraînement sur Google Colab
+
+1. Ouvrir `medical_finetune_colab.ipynb` sur [colab.research.google.com](https://colab.research.google.com)
+2. Activer le GPU : **Runtime → Changer le type d'exécution → GPU T4**
+3. Exécuter toutes les cellules dans l'ordre
+4. Uploader `datasets/medical_dataset_final.json` quand demandé
+5. Le modèle est sauvegardé dans `./phi35-medical-lora/`
+6. Télécharger le dossier via le panneau **Fichiers → Télécharger**
+
+### Fichiers
+
+| Fichier | Description |
 |---|---|
-| Rank (r) | 16 |
-| Alpha | 32 |
-| Dropout | 0.05 |
-| Quantization | 4-bit NF4 |
-| Samples | 2 000 |
-| Epochs | 2 |
-| Learning rate | 2e-4 |
-
-### Dataset médical
-- **Source :** [ruslanmv/ai-medical-chatbot](https://huggingface.co/datasets/ruslanmv/ai-medical-chatbot)
-- **Format :** conversations Patient / Doctor
-- **Volume :** ~250 000 échanges (2 000 utilisés pour le POC)
+| `medical_finetune_colab.ipynb` | Notebook Colab clé en main |
+| `scripts/train_medical_model.py` | Script Python autonome (avec `--hf` pour charger depuis HuggingFace) |
+| `test_financial_model.py` | Script de validation du modèle financier |
 
 ---
 
-## ⚠️ Avertissements
-
-- Le modèle financier hérité (`models/phi3_financial/`) présente un **risque de sécurité** détecté dans les logs (`training.log`) — voir rapport CYBER
-- Le modèle médical est **expérimental**, non validé médicalement, et ne remplace pas l'avis d'un professionnel de santé
+> ⚠️ Le modèle médical est **expérimental** et ne remplace pas l'avis d'un médecin. Non destiné à la production.
