@@ -19,8 +19,8 @@ function Logo({ size = 36, standalone = false }: { size?: number; standalone?: b
   );
 }
 
-const OLLAMA_URL = "http://localhost:11434";
-const MODEL = "phi3.5";
+const OLLAMA_URL = "http://172.20.10.5:11434";
+const MODEL = "phi3-financial";
 const SYSTEM_PROMPT = `You are a financial assistant specialized in helping financial analysts at TechCorp Industries.
 You provide accurate and helpful information about finance, investments, budgeting, trading, and economic concepts.
 Always respond in the same language as the user. Be concise and precise.`;
