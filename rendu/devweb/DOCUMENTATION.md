@@ -1,5 +1,16 @@
 # Interface Web — TechCorp Financial Assistant
 
+## Équipe
+
+| Nom | Prénom |
+|---|---|
+| RODRIGUES | Inacio |
+| SALY | Théo |
+| DICK | Olivier |
+| MEGHLAT | Hayat |
+
+---
+
 ## Description
 
 Interface de chat web développée en **Next.js 16** permettant d'interagir en temps réel avec le modèle Phi-3.5 Financial via Ollama.
