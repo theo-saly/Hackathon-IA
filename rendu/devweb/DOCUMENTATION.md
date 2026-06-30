@@ -8,9 +8,9 @@
 | SALY | Théo |
 | DICK | Olivier |
 | MEGHLAT | Hayat |
-| Thomas | ALISON |
-| Anas | BAHIAOUI |
-| Lucas | BGDU67 |
+| ALISON | Thomas |
+| BAHIAOUI | Anas |
+| DOCKWILLER | Lucas |
 ---
 
 ## Description
